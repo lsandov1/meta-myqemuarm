@@ -1,0 +1,4 @@
+kconf hardware myqemuarm.cfg
+
+kconf hardware myqemuarm-user-config.cfg
+include myqemuarm-user-patches.scc

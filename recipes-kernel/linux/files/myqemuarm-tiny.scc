@@ -1,0 +1,7 @@
+define KMACHINE myqemuarm
+
+define KARCH arm
+
+include ktypes/tiny/tiny.scc
+
+include myqemuarm.scc
