@@ -1,6 +1,6 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-PR := "${PR}.3"
+PR := "${PR}.2"
 
 COMPATIBLE_MACHINE_myqemuarm = "myqemuarm"
 

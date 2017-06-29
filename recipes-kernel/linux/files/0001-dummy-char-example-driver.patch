@@ -1,0 +1,132 @@
+From 4ae0cf8ea982c22fbd8020aaa33a823ee2ffad85 Mon Sep 17 00:00:00 2001
+From: Leonardo Sandoval <leonardo.sandoval.gonzalez@linux.intel.com>
+Date: Wed, 14 Jun 2017 12:10:39 -0700
+Subject: [PATCH] dummy: char example driver
+
+Signed-off-by: Leonardo Sandoval <leonardo.sandoval.gonzalez@linux.intel.com>
+---
+ drivers/char/Kconfig        |  2 ++
+ drivers/char/dummy/Kconfig  |  5 +++
+ drivers/char/dummy/Makefile |  1 +
+ drivers/char/dummy/dummy.c  | 76 +++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 84 insertions(+)
+ create mode 100644 drivers/char/dummy/Kconfig
+ create mode 100644 drivers/char/dummy/Makefile
+ create mode 100644 drivers/char/dummy/dummy.c
+
+diff --git a/drivers/char/Kconfig b/drivers/char/Kconfig
+index dcc09739a54e..df21c796ffed 100644
+--- a/drivers/char/Kconfig
++++ b/drivers/char/Kconfig
+@@ -4,6 +4,8 @@
+ 
+ menu "Character devices"
+ 
++source "drivers/char/dummy/Kconfig"
++
+ source "drivers/tty/Kconfig"
+ 
+ config DEVMEM
+diff --git a/drivers/char/dummy/Kconfig b/drivers/char/dummy/Kconfig
+new file mode 100644
+index 000000000000..d0a63ec096a5
+--- /dev/null
++++ b/drivers/char/dummy/Kconfig
+@@ -0,0 +1,5 @@
++config YOCTO_DUMMY
++       tristate "Yocto Dummy Driver"
++       help
++         This driver provides a dummy driver, just needed for as patch example
++
+diff --git a/drivers/char/dummy/Makefile b/drivers/char/dummy/Makefile
+new file mode 100644
+index 000000000000..b320d255db44
+--- /dev/null
++++ b/drivers/char/dummy/Makefile
+@@ -0,0 +1 @@
++obj-y += dummy.o
+diff --git a/drivers/char/dummy/dummy.c b/drivers/char/dummy/dummy.c
+new file mode 100644
+index 000000000000..dd055a24496f
+--- /dev/null
++++ b/drivers/char/dummy/dummy.c
+@@ -0,0 +1,76 @@
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/fs.h>
++#include <linux/device.h>
++#define DEVICE_NAME "dummy"
++#define MAJOR_NUM 42
++#define NUM_DEVICES 4
++
++static struct class *dummy_class;
++static int dummy_open(struct inode *inode, struct file *file)
++{
++  pr_info("%s\n", __func__);
++  return 0;
++}
++
++static int dummy_release(struct inode *inode, struct file *file)
++{
++  pr_info("%s\n", __func__);
++  return 0;
++}
++
++static ssize_t dummy_read(struct file *file,
++  char *buffer, size_t length, loff_t * offset)
++{
++  pr_info("%s %u\n", __func__, length);
++  return 0;
++}
++
++static ssize_t dummy_write(struct file *file,
++  const char *buffer, size_t length, loff_t * offset)
++{
++  pr_info("%s %u\n", __func__, length);
++  return length;
++}
++
++struct file_operations dummy_fops = {
++  .owner = THIS_MODULE,
++  .open = dummy_open,
++  .release = dummy_release,
++  .read = dummy_read,
++  .write = dummy_write,
++};
++
++int __init dummy_init(void)
++{
++  int ret;
++  int i;
++  printk("Dummy loaded\n");
++  ret = register_chrdev(MAJOR_NUM, DEVICE_NAME, &dummy_fops);
++  if (ret != 0)
++    return ret;
++  dummy_class = class_create(THIS_MODULE, DEVICE_NAME);
++  for (i = 0; i < NUM_DEVICES; i++) {
++    device_create(dummy_class, NULL,
++    MKDEV(MAJOR_NUM, i), NULL, "dummy%d", i);
++  }
++  return 0;
++}
++
++void __exit dummy_exit(void)
++{
++  int i;
++  for (i = 0; i < NUM_DEVICES; i++) {
++    device_destroy(dummy_class, MKDEV(MAJOR_NUM, i));
++  }
++  class_destroy(dummy_class);
++  unregister_chrdev(MAJOR_NUM, DEVICE_NAME);
++  printk("Dummy unloaded\n");
++}
++
++module_init(dummy_init);
++module_exit(dummy_exit);
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Chris Simmonds");
++MODULE_DESCRIPTION("A dummy driver");
+-- 
+2.12.0
+
